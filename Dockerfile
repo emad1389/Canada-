@@ -15,28 +15,6 @@ ENV PATH="/root/.bun/bin:$PATH"
 WORKDIR /build
 RUN git clone --depth 1 https://github.com/PasarGuard/panel.git .
 
-# Railway internal DNS: accept any single hostname prefix before .railway.internal.
-# Examples: pasarguard-node.railway.internal, pasarguard-nod.railway.internal, ali.railway.internal.
-RUN python - <<'PY'
-from pathlib import Path
-p = Path("app/models/node.py")
-s = p.read_text()
-old = """            # Regex for domain validation
-            if re.match(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,14}$", v):
-                return v
-"""
-new = """            # Railway private DNS: accept any valid hostname prefix before .railway.internal.
-            if re.fullmatch(r"[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.railway\.internal", v, re.IGNORECASE):
-                return v
-            # Regex for public/domain hostnames.
-            if re.match(r"^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,14}$", v):
-                return v
-"""
-if old not in s:
-    raise SystemExit("target validation block not found")
-p.write_text(s.replace(old,new,1))
-PY
-
 # ساخت خروجی استاتیک داشبورد؛ اگر این پوشه از قبل وجود نداشته باشد،
 # خود برنامه هنگام استارت runtime سعی می‌کند با bun بسازدش که در ایمیج نهایی
 # bun نصب نیست و باعث کرش می‌شود (FileNotFoundError: bun)
