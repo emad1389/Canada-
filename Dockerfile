@@ -34,15 +34,17 @@ FROM python:$PYTHON_VERSION-slim-bookworm
 COPY --from=builder /build /code
 WORKDIR /code
 ENV PATH="/code/.venv/bin:$PATH"
+# پیش‌فرض‌های غیرمحرمانه مخصوص Railway و قالب اشتراک
+ENV UVICORN_HOST=0.0.0.0
+ENV CUSTOM_TEMPLATES_DIRECTORY=/code/templates/
+ENV SUBSCRIPTION_PAGE_TEMPLATE=subscription/index.html
 
 RUN apt-get update && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && mkdir -p /code/templates/subscription
 
 COPY start-railway.sh /start-railway.sh
 RUN chmod +x /start-railway.sh /code/start.sh
 
-# این خط به Railway می‌گوید پنل روی کدام پورت گوش می‌دهد تا موقع ساخت
-# دامنه، پورت درست را خودش به‌صورت خودکار تشخیص دهد.
 EXPOSE 8000
-
 ENTRYPOINT ["/start-railway.sh"]
